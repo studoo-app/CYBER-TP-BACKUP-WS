@@ -44,7 +44,7 @@ services:
     container_name: backup-srv
     restart: unless-stopped
     volumes:
-      - ./data/backup-srv:/backup
+      - ./data/backup-srv:/home/bkpagent
     networks:
       - debian-network
   db-srv:
