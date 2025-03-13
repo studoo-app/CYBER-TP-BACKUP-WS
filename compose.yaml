@@ -1,0 +1,67 @@
+services:
+  gateway-ssh:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile-gateway
+    container_name: gateway-ssh
+    ports:
+      - "2222:22"  # Redirection du port SSH (22 dans le conteneur vers 2222 sur l'hôte)
+    restart: unless-stopped
+    volumes:
+      - ./data/gateway-ssh:/shared  # Dossier partagé entre l'hôte et le conteneur
+    networks:
+      - debian-network
+  compta-ws-1:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile-workstation
+      args:
+        - USER=jeanine
+    container_name: compta-ws-1
+    restart: unless-stopped
+    volumes:
+      - ./data/compta-ws-1:/home
+    networks:
+      - debian-network
+  dir-ws:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile-workstation
+      args:
+          - USER=jean
+    container_name: dir-ws
+    restart: unless-stopped
+    volumes:
+      - ./data/dir-ws-1:/home
+    networks:
+      - debian-network
+  backup-srv:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile-backup
+      args:
+        - USER=bkpagent
+    container_name: backup-srv
+    restart: unless-stopped
+    volumes:
+      - ./data/backup-srv:/backup
+    networks:
+      - debian-network
+  db-srv:
+    build:
+      context: .
+      dockerfile: ./docker/Dockerfile-database
+    container_name: db-srv
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+#      MYSQL_DATABASE: app_db
+#    ports:
+#      - "3306:3306"  # Port MariaDB
+    volumes:
+      - ./data/db-srv/dbdata:/var/lib/mysql
+      - ./docker/databases:/docker-entrypoint-initdb.d
+    restart: always
+    networks:
+        - debian-network
+networks:
+  debian-network:

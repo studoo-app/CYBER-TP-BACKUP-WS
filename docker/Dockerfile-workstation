@@ -1,0 +1,35 @@
+FROM debian:12
+
+ARG USER
+# Installation des paquets nécessaires
+RUN apt-get update && apt-get install -y \
+    openssh-server \
+    sudo \
+    vim \
+    curl \
+    wget \
+    procps \
+    net-tools \
+    iputils-ping \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Configuration du service SSH
+RUN mkdir /var/run/sshd
+RUN echo 'root:password' | chpasswd  # Définit le mot de passe root (à changer)
+RUN sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin no/' /etc/ssh/sshd_config
+
+# Création d'un utilisateur non-root avec sudo
+RUN useradd -m -s /bin/bash $USER
+RUN echo "$USER:password" | chpasswd   # Définit le mot de passe utilisateur (à changer)
+RUN usermod -aG sudo $USER
+
+# Création du dossier partagé
+#RUN mkdir -p /shared \
+#    && chown devuser:devuser /shared
+
+# Exposition du port SSH
+#EXPOSE 22
+
+# Démarrage du serveur SSH au lancement du conteneur
+CMD ["/usr/sbin/sshd", "-D"]

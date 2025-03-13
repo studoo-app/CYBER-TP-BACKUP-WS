@@ -1,0 +1,38 @@
+FROM mariadb:10.5.8
+
+# Installation des paquets nécessaires pour SSH
+RUN apt-get update && apt-get install -y \
+    openssh-server \
+    sudo \
+    vim \
+    procps \
+    net-tools \
+    iputils-ping \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Configuration du service SSH
+RUN mkdir /var/run/sshd
+RUN echo 'root:root!' | chpasswd
+# Permettre la connexion SSH avec le compte root (à utiliser avec précaution en production)
+RUN sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin no/' /etc/ssh/sshd_config
+
+# Création d'un utilisateur dédié pour l'administration
+RUN useradd -m -s /bin/bash dbadmin \
+    && echo "dbadmin:dbadmin123" | chpasswd \
+    && usermod -aG sudo dbadmin
+
+# S'assurer que le service SSH démarre correctement
+RUN mkdir -p /etc/service/sshd
+COPY ./docker/scripts/start-sshd.sh /etc/service/sshd/run
+RUN chmod +x /etc/service/sshd/run
+
+# Exposition du port SSH en plus du port MariaDB
+#EXPOSE 3306 22
+
+# Script de démarrage personnalisé pour lancer à la fois MariaDB et SSH
+COPY ./docker/scripts/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+ENTRYPOINT ["/entrypoint.sh"]
+CMD ["mysqld"]
