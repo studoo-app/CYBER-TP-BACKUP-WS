@@ -38,7 +38,7 @@ services:
   backup-srv:
     build:
       context: .
-      dockerfile: docker/Dockerfile-backup
+      dockerfile: docker/Dockerfile-workstation
       args:
         - USER=bkpagent
     container_name: backup-srv
